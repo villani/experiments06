@@ -48,10 +48,11 @@ public class Evaluating {
 		boolean brknn = Boolean.parseBoolean(entradas.get("brknn"));
 		boolean chain = Boolean.parseBoolean(entradas.get("chain"));
 		boolean lp = Boolean.parseBoolean(entradas.get("lp"));
-		boolean hmc = Boolean.parseBoolean(entradas.get("hmc"));
+		boolean hmc_t = Boolean.parseBoolean(entradas.get("hmc_t"));
+		boolean hmc_a = Boolean.parseBoolean(entradas.get("hmc_a"));
 		String rotulos = entradas.get("rotulos");
 		String[] tecnicas = { "Ehd", "Lbp", "Sift", "Gabor" };
-		String[] classificadores = {"MLkNN", "BRkNN", "Chain", "LP", "HMC"};
+		String[] classificadores = {"MLkNN", "BRkNN", "Chain", "LP", "HMC_T", "HMC_A"};
 
 		for (String tecnica : tecnicas) {
 
@@ -66,15 +67,18 @@ public class Evaluating {
 				if (classificador.equals("BRkNN") && !brknn) continue;
 				if (classificador.equals("Chain") && !chain) continue;
 				if (classificador.equals("LP") && !lp) continue;
-				if (classificador.equals("HMC") && !hmc) continue;
+				if (classificador.equals("HMC_T") && !hmc_t) continue;
+				if (classificador.equals("HMC_A") && !hmc_a) continue;
 
 				for (int i = 0; i < 10; i++) {
 
-					String base = tecnica + "-Sub" + i + ".arff";
+					String base = tecnica + "/" + tecnica + "-Sub" + i + ".arff";
+					
+					
 					MultiLabelInstances trainingSet = null;
 					try {
-						log.write(" - Instanciando conjunto de treinamento multirrótulo de treino");
-						trainingSet = new MultiLabelInstances(tecnica + "/" + base, rotulos);
+						log.write(" - Instanciando conjunto de treinamento multirrótulo de treino " + base);
+						trainingSet = new MultiLabelInstances(base, rotulos);
 					} catch (InvalidDataFormatException idfe) {
 						log.write(" - Erro no formato de dados ao instanciar conjunto multirrótulos de treino " + 
 								base + ": " + idfe.getMessage());
@@ -93,7 +97,11 @@ public class Evaluating {
 						IBk kNN = new IBk(10);
 						mlLearner = new LabelPowerset(kNN);
 					}
-					if (classificador.equals("HMC")) mlLearner = new HMC();
+					if (classificador.equals("HMC_T")) mlLearner = new HMC();
+					if (classificador.equals("HMC_A")) {
+						mlLearner = new HMC(new MLkNN());
+					}
+					
 
 					try {
 						log.write(" - Construindo modelo do " + mlLearner.getClass() + " a partir do conjunto de treinamento " + base);
@@ -126,20 +134,20 @@ public class Evaluating {
 					medidas.add(new ErrorSetSize());
 					medidas.add(new RankingLoss());
 
-					for (int j = 1; j < 10; j++) {
+					for (int j = 0; j < 10; j++) {
 						
 						if(j == i) continue;
 
-						String baseTreino = tecnica + "-Sub" + j + ".arff";
+						String baseTeste = tecnica + "-Sub" + j + ".arff";
 
 						MultiLabelInstances testSet = null;
 						
 						try {
-							log.write(" - Instanciando conjunto multirrótulo de teste");
-							testSet = new MultiLabelInstances(tecnica + "/" + baseTreino, rotulos);
+							log.write(" - Instanciando conjunto multirrótulo de teste " + baseTeste);
+							testSet = new MultiLabelInstances(tecnica + "/" + baseTeste, rotulos);
 						} catch (InvalidDataFormatException idfe) {
 							log.write(" - Erro no formato de dados ao instanciar conjunto multirrótulos de teste " + 
-									baseTreino + ": " + idfe.getMessage());
+									baseTeste + ": " + idfe.getMessage());
 							System.exit(0);
 						}
 
