@@ -97,9 +97,13 @@ public class Evaluating {
 						IBk kNN = new IBk(10);
 						mlLearner = new LabelPowerset(kNN);
 					}
-					if (classificador.equals("HMC_T")) mlLearner = new HMC();
+					if (classificador.equals("HMC_T")) {
+						MultiLabelLearnerBase mlLearnerBase = new BRkNN(5);
+						mlLearner = new HMC(mlLearnerBase);
+					}
 					if (classificador.equals("HMC_A")) {
-						mlLearner = new HMC(new MLkNN());
+						MultiLabelLearnerBase mlLearnerBase = new MLkNN(5, 1.0);
+						mlLearner = new HMC(mlLearnerBase);
 					}
 					
 
