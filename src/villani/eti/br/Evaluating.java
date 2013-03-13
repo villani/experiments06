@@ -10,6 +10,9 @@ import mulan.classifier.MultiLabelLearnerBase;
 import mulan.classifier.lazy.BRkNN;
 import mulan.classifier.lazy.MLkNN;
 import mulan.classifier.meta.HMC;
+import mulan.classifier.meta.HOMER;
+import mulan.classifier.meta.HierarchyBuilder;
+import mulan.classifier.transformation.BinaryRelevance;
 import mulan.classifier.transformation.ClassifierChain;
 import mulan.classifier.transformation.LabelPowerset;
 import mulan.data.InvalidDataFormatException;
@@ -50,9 +53,11 @@ public class Evaluating {
 		boolean lp = Boolean.parseBoolean(entradas.get("lp"));
 		boolean hmc_t = Boolean.parseBoolean(entradas.get("hmc_t"));
 		boolean hmc_a = Boolean.parseBoolean(entradas.get("hmc_a"));
+		boolean homer_t = Boolean.parseBoolean(entradas.get("homer_t"));
+		boolean homer_a = Boolean.parseBoolean(entradas.get("homer_a"));
 		String rotulos = entradas.get("rotulos");
 		String[] tecnicas = { "Ehd", "Lbp", "Sift", "Gabor" };
-		String[] classificadores = {"MLkNN", "BRkNN", "Chain", "LP", "HMC_T", "HMC_A"};
+		String[] classificadores = {"MLkNN", "BRkNN", "Chain", "LP", "HMC_T", "HMC_A", "HOMER_T", "HOMER_A"};
 
 		for (String tecnica : tecnicas) {
 
@@ -69,6 +74,8 @@ public class Evaluating {
 				if (classificador.equals("LP") && !lp) continue;
 				if (classificador.equals("HMC_T") && !hmc_t) continue;
 				if (classificador.equals("HMC_A") && !hmc_a) continue;
+				if (classificador.equals("HOMER_T") && !homer_t) continue;
+				if (classificador.equals("HOMER_A") && !homer_a) continue;
 
 				for (int i = 0; i < 10; i++) {
 
@@ -77,10 +84,10 @@ public class Evaluating {
 					
 					MultiLabelInstances trainingSet = null;
 					try {
-						log.write(" - Instanciando conjunto de treinamento multirr�tulo de treino " + base);
+						log.write(" - Instanciando conjunto de treinamento multirrótulo de treino " + base);
 						trainingSet = new MultiLabelInstances(base, rotulos);
 					} catch (InvalidDataFormatException idfe) {
-						log.write(" - Erro no formato de dados ao instanciar conjunto multirr�tulos de treino " + 
+						log.write(" - Erro no formato de dados ao instanciar conjunto multirrótulos de treino " + 
 								base + ": " + idfe.getMessage());
 						System.exit(0);
 					}
@@ -98,12 +105,28 @@ public class Evaluating {
 						mlLearner = new LabelPowerset(kNN);
 					}
 					if (classificador.equals("HMC_T")) {
-						MultiLabelLearnerBase mlLearnerBase = new BRkNN(5);
+						IBk kNN = new IBk(10);
+						String[] options = {"-X"};
+						try{
+							kNN.setOptions(options);
+						}catch(Exception e){
+							log.write(" - Essa opção não é suportada: " + e.getMessage());
+						}
+						MultiLabelLearnerBase mlLearnerBase = new BinaryRelevance(kNN);
 						mlLearner = new HMC(mlLearnerBase);
 					}
 					if (classificador.equals("HMC_A")) {
 						MultiLabelLearnerBase mlLearnerBase = new MLkNN(5, 1.0);
 						mlLearner = new HMC(mlLearnerBase);
+//						mlLearner = new HMC();
+					}
+					if (classificador.equals("HOMER_T")){
+						BRkNN mlLearnerBase = new BRkNN();
+						mlLearner = new HOMER(mlLearnerBase, 3, HierarchyBuilder.Method.BalancedClustering);
+					}
+					if (classificador.equals("HOMER_A")){
+						MLkNN mlLearnerBase = new MLkNN();
+						mlLearner = new HOMER(mlLearnerBase, 3, HierarchyBuilder.Method.BalancedClustering);
 					}
 					
 
@@ -147,10 +170,10 @@ public class Evaluating {
 						MultiLabelInstances testSet = null;
 						
 						try {
-							log.write(" - Instanciando conjunto multirr�tulo de teste " + baseTeste);
+							log.write(" - Instanciando conjunto multirrótulo de teste " + baseTeste);
 							testSet = new MultiLabelInstances(tecnica + "/" + baseTeste, rotulos);
 						} catch (InvalidDataFormatException idfe) {
-							log.write(" - Erro no formato de dados ao instanciar conjunto multirr�tulos de teste " + 
+							log.write(" - Erro no formato de dados ao instanciar conjunto multirrótulos de teste " + 
 									baseTeste + ": " + idfe.getMessage());
 							System.exit(0);
 						}
@@ -160,21 +183,21 @@ public class Evaluating {
 						try {
 							avaliacao = avaliador.evaluate(mlLearner, testSet, medidas);
 						} catch (IllegalArgumentException iae) {
-							log.write(" - Argumentos utilizados inv�lidos: " + iae.getMessage());
+							log.write(" - Argumentos utilizados inválidos: " + iae.getMessage());
 							System.exit(0);
 						} catch (Exception e) {
 							log.write(" - Falha ao avaliar o modelo: " + e.getMessage());
 							System.exit(0);
 						}
 
-						log.write(" - Salvando resultado da avalia��o");
-						File resultado = new File(id + classificador + "-" + tecnica + "-Sub" + j + ".csv");
+						log.write(" - Salvando resultado da avaliação");
+						File resultado = new File(id + classificador + "-" + tecnica + "Treino" + i + "-Teste" + j + ".csv");
 						try {
 							FileWriter escritor = new FileWriter(resultado);
 							escritor.write(avaliacao.toString());
 							escritor.close();
 						} catch (IOException ioe) {
-							log.write(" - Falha ao salvar resultado da avalia��o: " + ioe.getMessage());
+							log.write(" - Falha ao salvar resultado da avaliação: " + ioe.getMessage());
 							System.exit(0);
 						}
 
