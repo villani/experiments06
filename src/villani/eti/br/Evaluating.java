@@ -37,6 +37,7 @@ import mulan.evaluation.measure.OneError;
 import mulan.evaluation.measure.RankingLoss;
 import mulan.evaluation.measure.SubsetAccuracy;
 import weka.classifiers.lazy.IBk;
+import weka.classifiers.trees.RandomForest;
 
 public class Evaluating {
 
@@ -97,8 +98,9 @@ public class Evaluating {
 					if (classificador.equals("MLkNN")) mlLearner = new MLkNN(); // default k=10
 					if (classificador.equals("BRkNN")) mlLearner = new BRkNN(); // default k=10
 					if (classificador.equals("Chain")) {
-						IBk kNN = new IBk(10);
-						mlLearner = new ClassifierChain(kNN);
+//						IBk classifier = new IBk(10);
+						RandomForest classifier = new RandomForest();
+						mlLearner = new ClassifierChain(classifier);
 					}
 					if (classificador.equals("LP")) {
 						IBk kNN = new IBk(10);
@@ -121,7 +123,9 @@ public class Evaluating {
 //						mlLearner = new HMC();
 					}
 					if (classificador.equals("HOMER_T")){
-						BRkNN mlLearnerBase = new BRkNN();
+//						BRkNN mlLearnerBase = new BRkNN();
+						RandomForest classifier = new RandomForest();
+						BinaryRelevance mlLearnerBase = new BinaryRelevance(classifier);
 						mlLearner = new HOMER(mlLearnerBase, 3, HierarchyBuilder.Method.BalancedClustering);
 					}
 					if (classificador.equals("HOMER_A")){
