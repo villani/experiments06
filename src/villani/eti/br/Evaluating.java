@@ -195,7 +195,7 @@ public class Evaluating {
 						}
 
 						log.write(" - Salvando resultado da avaliação");
-						File resultado = new File(id + classificador + "-" + tecnica + "Treino" + i + "-Teste" + j + ".csv");
+						File resultado = new File(id + classificador + "-" + tecnica + "-Treino" + i + "-Teste" + j + ".csv");
 						try {
 							FileWriter escritor = new FileWriter(resultado);
 							escritor.write(avaliacao.toString());
