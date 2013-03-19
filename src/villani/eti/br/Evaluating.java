@@ -107,14 +107,15 @@ public class Evaluating {
 						mlLearner = new LabelPowerset(kNN);
 					}
 					if (classificador.equals("HMC_T")) {
-						IBk kNN = new IBk(10);
-						String[] options = {"-X"};
-						try{
-							kNN.setOptions(options);
-						}catch(Exception e){
-							log.write(" - Essa opção não é suportada: " + e.getMessage());
-						}
-						MultiLabelLearnerBase mlLearnerBase = new BinaryRelevance(kNN);
+//						IBk classifier = new IBk(10);
+//						String[] options = {"-X"};
+//						try{
+//							classifier.setOptions(options);
+//						}catch(Exception e){
+//							log.write(" - Essa opção não é suportada: " + e.getMessage());
+//						}
+						RandomForest classifier = new RandomForest();
+						MultiLabelLearnerBase mlLearnerBase = new BinaryRelevance(classifier);
 						mlLearner = new HMC(mlLearnerBase);
 					}
 					if (classificador.equals("HMC_A")) {
